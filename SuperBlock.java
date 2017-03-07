@@ -1,6 +1,6 @@
 
 
-// The first disk block, block 0, is called the "superblock".
+// The first disk block (block 0) is called the "superblock".
 // It is used to describe:
 // 		1. The number of disk blocks.
 //		2. The number of inodes.
@@ -11,11 +11,14 @@
 // to the superblock.
 public class SuperBlock {
 	
+	private static final int INVALID_BLOCK = -1;
+	
+	private static final int DEFAULT_BLOCKS = 1000;
+	private static final int EMPTY_BLOCK = 0;
 	private static final int DEFAULT_INODE_BLOCKS = 64;
 	private static final int TOTAL_BLOCK_LOCATION = 0;
 	private static final int TOTAL_INODE_LOCATION = 4;
 	private static final int FREE_LIST_LOCATION = 8;
-	private static final int DEFAULT_BLOCKS = 1000;
 	
 	
 	public int totalBlocks;		// the number of disk blocks
@@ -47,7 +50,18 @@ public class SuperBlock {
 		
 		totalBlocks = diskSize;
 		
+		format(DEFAULT_INODE_BLOCKS);
+		
 	}
+	
+	
+    private void eraseBlocksInRange(byte[] newEmptyBlock, int firstBlock, int lastBlock) {
+		
+        // Erase all blocks in given range (from firstBlock to lastBlock)
+        for (int blockId = firstBlock; blockId < lastBlock; blockId++) {
+            newEmptyBlock[blockId] = EMPTY_BLOCK;
+        }
+    }
 	
 	
 	
@@ -74,12 +88,124 @@ public class SuperBlock {
 		// Note: 16 Inodes can be stored in one block.
 		freeList = ((totalInodes / 16) + 2);
 		
-		byte[] newBlock =
+		
+		byte[] newEmptyBlock = null;
+		
+		for (int i = freeList; i < DEFAULT_BLOCKS - 1; i++) {
+			
+			newEmptyBlock = new byte[Disk.blockSize];
+			
+			// Erase all disk blocks
+			eraseBlocksInRange(newEmptyBlock, 0, Disk.blockSize);
+			
+			SysLib.int2bytes((i + 1), newEmptyBlock, 0);
+			SysLib.rawwrite(i, newEmptyBlock);		
+		}
 		
 		
+		newEmptyBlock = new byte[Disk.blockSize];
+		
+		// Erase all disk blocks
+		eraseBlocksInRange(newEmptyBlock, 0, Disk.blockSize);
+		
+		SysLib.int2bytes(-1, newEmptyBlock, 0);
+		SysLib.rawwrite(DEFAULT_BLOCKS - 1, newEmptyBlock);
+		
+		byte[] superBlockReplacement = new byte[Disk.blockSize];
 		
 		
+		// Copy all components back
+		SysLib.int2bytes(totalBlock, superBlockReplacement, TOTAL_BLOCK_LOCATION);
+		SysLib.int2bytes(totalInodes, superBlockReplacement, TOTAL_INODE_LOCATION);
+		SysLib.int2bytes(freeList, superBlockReplacement, FREE_LIST_LOCATION);
 		
+		// Write to superBlockReplacement
+		SysLib.rawwrite(0, superBlockReplacement);
+	}
+	
+	
+	
+	public void sync() {
+		
+		byte[] byteData = new byte[Disk.blockSize];
+		
+		SysLib.int2bytes(freeList, byteData, FREE_LIST_LOCATION);
+		SysLib.int2bytes(totalBlock, byteData, TOTAL_BLOCK_LOCATION);
+		SysLib.int2bytes(totalInodes, byteData, TOTAL_INODE_LOCATION);
+		
+		SysLib.rawwrite(0, byteData);
+	}
+	
+	
+	
+	
+	
+	public int nextFreeBlock() {
+		
+		if ((freeList > 0) && (freeList < totalBlocks)) {
+			
+			byte[] byteData = new byte[Disk.blockSize];
+			
+			SysLib.rawread(freeList, byteData);
+			
+					
+			int blockLocation = freeList;
+			
+			// Update the next available (free) block.
+			freeList = SysLib.bytes2int(byteData, 0);
+			
+			// return the blockLocation
+			return blockLocation;
+		}
+		
+		
+		// If we get here, it means we our freeList state is invalid.
+		return INVALID_BLOCK;
+	}
+	
+	
+	
+	
+	public boolean returnBlock(int blockId) {
+		
+		if ((blockId > 0) && (blockId < totalBlocks)) {
+			
+			int nextFreeBlock = freeList;
+			
+			int temp = 0;
+			
+			byte[] nextBlock = new byte[Disk.blockSize];
+			byte[] newEmptyBlock = new byte[Disk.blockSize];
+			
+			eraseBlocksInRange(newEmptyBlock, 0, Disk.blockSize);
+			
+			SysLib.int2bytes(-1, newEmptyBlock, 0);
+			
+			
+			while (nextFreeBlock != INVALID) {
+				
+				SysLib.rawread(nextFreeBlock, nextBlock);
+				
+				temp = SysLib.bytes2int(nextFreeBlock, nextBlock);
+				if (temp == INVALID) {
+					
+					// Set the next free block
+					SysLib.int2bytes(blockId, nextFreeBlock, 0);
+					SysLib.rawwrite(nextFreeBlock, nextBlock);
+					SysLib.rawwrite(blockID, newEmptyBlock);
+					
+					
+					// If we get here, that means our operation completed successfully. 
+					return true;
+				}
+				
+				
+				nextFreeBlock = temp;
+			}
+			
+			
+			return false;
+		}
 	}
 	
 }
