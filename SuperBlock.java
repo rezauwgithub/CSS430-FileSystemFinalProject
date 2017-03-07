@@ -11,14 +11,14 @@
 // to the superblock.
 public class SuperBlock {
 	
-	private static final int INVALID_BLOCK = -1;
+	private final static int INVALID_BLOCK = -1;
 	
-	private static final int DEFAULT_BLOCKS = 1000;
-	private static final int EMPTY_BLOCK = 0;
-	private static final int DEFAULT_INODE_BLOCKS = 64;
-	private static final int TOTAL_BLOCK_LOCATION = 0;
-	private static final int TOTAL_INODE_LOCATION = 4;
-	private static final int FREE_LIST_LOCATION = 8;
+	private final static int DEFAULT_BLOCKS = 1000;
+	private final static int EMPTY_BLOCK = 0;
+	private final static int DEFAULT_INODE_BLOCKS = 64;
+	private final static int TOTAL_BLOCK_LOCATION = 0;
+	private final static int TOTAL_INODE_LOCATION = 4;
+	private final static int FREE_LIST_LOCATION = 8;
 	
 	
 	public int totalBlocks;		// the number of disk blocks
