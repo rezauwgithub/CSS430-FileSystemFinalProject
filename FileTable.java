@@ -22,6 +22,7 @@ public class FileTable {
 		// increment this inode's count
 		// immediately write back this inode to the disk
 		// return a reference to this file (structure) table entry
+
 	}
 	
 	
@@ -32,6 +33,7 @@ public class FileTable {
 		// save the corresponding inode to the disk
 		// free this file table entry
 		// return true if this file table entry found in my table
+		
 	}
 	
 	
