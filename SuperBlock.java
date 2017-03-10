@@ -55,6 +55,9 @@ public class SuperBlock {
 	}
 	
 	
+	// This function is used to erase blocks on the SuperBlock. It takes a byte array,
+	// as well as a int representing the first block and another int representing the last block
+	// we want to erase.
     private void eraseBlocksInRange(byte[] newEmptyBlock, int firstBlock, int lastBlock) {
 		
         // Erase all blocks in given range (from firstBlock to lastBlock)

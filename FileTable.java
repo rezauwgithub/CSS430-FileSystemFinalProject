@@ -2,7 +2,7 @@
 // The file (structure) table is defined as follows:
 public class FileTable {
 
-	private Vector table;	// the actual entity of this file table
+	private Vector table;			// the actual entity of this file table
 	private Directory directory;	// the root directory
 	
 	
