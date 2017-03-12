@@ -42,7 +42,7 @@ public class SuperBlock {
 		
 		
 		// Validate disk contents
-		if ((totalBlock == diskSize) && (totalInodes > 0) && (freeList >= 2)) {
+		if ((totalBlocks == diskSize) && (totalInodes > 0) && (freeList >= 2)) {
 			return;	// Is valid
 		}
 		
@@ -118,7 +118,7 @@ public class SuperBlock {
 		
 		
 		// Copy all components back
-		SysLib.int2bytes(totalBlock, superBlockReplacement, TOTAL_BLOCK_LOCATION);
+		SysLib.int2bytes(totalBlocks, superBlockReplacement, TOTAL_BLOCK_LOCATION);
 		SysLib.int2bytes(totalInodes, superBlockReplacement, TOTAL_INODE_LOCATION);
 		SysLib.int2bytes(freeList, superBlockReplacement, FREE_LIST_LOCATION);
 		
@@ -133,7 +133,7 @@ public class SuperBlock {
 		byte[] byteData = new byte[Disk.blockSize];
 		
 		SysLib.int2bytes(freeList, byteData, FREE_LIST_LOCATION);
-		SysLib.int2bytes(totalBlock, byteData, TOTAL_BLOCK_LOCATION);
+		SysLib.int2bytes(totalBlocks, byteData, TOTAL_BLOCK_LOCATION);
 		SysLib.int2bytes(totalInodes, byteData, TOTAL_INODE_LOCATION);
 		
 		SysLib.rawwrite(0, byteData);
@@ -185,17 +185,17 @@ public class SuperBlock {
 			SysLib.int2bytes(-1, newEmptyBlock, 0);
 			
 			
-			while (nextFreeBlock != INVALID) {
+			while (nextFreeBlock != INVALID_BLOCK) {
 				
 				SysLib.rawread(nextFreeBlock, nextBlock);
 				
-				temp = SysLib.bytes2int(nextFreeBlock, nextBlock);
-				if (temp == INVALID) {
+				temp = SysLib.bytes2int(nextBlock, 0);
+				if (temp == INVALID_BLOCK) {
 					
 					// Set the next free block
-					SysLib.int2bytes(blockId, nextFreeBlock, 0);
+					SysLib.int2bytes(blockId, nextBlock, 0);
 					SysLib.rawwrite(nextFreeBlock, nextBlock);
-					SysLib.rawwrite(blockID, newEmptyBlock);
+					SysLib.rawwrite(blockId, newEmptyBlock);
 					
 					
 					// If we get here, that means our operation completed successfully. 
@@ -205,10 +205,9 @@ public class SuperBlock {
 				
 				nextFreeBlock = temp;
 			}
-			
-			
-			return false;
 		}
+		
+		return false;	// Returning invalid block.
 	}
 	
 }
