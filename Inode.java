@@ -17,12 +17,14 @@
 public class Inode {
 	
 	private final static int INODE_SIZE = 32;	// fix to 32 bytes
-	private final static int DIRECT_SIZE = 11;	// # direct pointers
 	private final static int MAX_BYTES = 512;
 	private final static int BLOCK_SIZE = 16;
 	private final static int INT_BLOCK = 4;
 	private final static int SHORT_BLOCK = 2;
 	private final static int ERROR = -1;
+	
+	
+	public final static int DIRECT_SIZE = 11;	// # direct pointers
 	
 	
 	public int length;		// file size in bytes
