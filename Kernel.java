@@ -2,6 +2,9 @@ import java.util.*;
 import java.lang.reflect.*;
 import java.io.*;
 
+// MODIFIED BY REZA to make it work with our File System
+// Any parts that have ADDED BY REZA, are the parts that
+// were modified or code was added to it.
 public class Kernel
 {
    // Interrupt requests
@@ -31,8 +34,7 @@ public class Kernel
    public final static int OPEN    = 14; // SysLib.open( String fileName )
    public final static int CLOSE   = 15; // SysLib.close( int fd )
    public final static int SIZE    = 16; // SysLib.size( int fd )
-   public final static int SEEK    = 17; // SysLib.seek( int fd, int offest, 
-   //              int whence )
+   public final static int SEEK    = 17; // SysLib.seek( int fd, int offest, int whence )
    public final static int FORMAT  = 18; // SysLib.format( int files )
    public final static int DELETE  = 19; // SysLib.delete( String fileName )
 
