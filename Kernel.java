@@ -56,6 +56,14 @@ public class Kernel
    private static SyncQueue waitQueue;  // for threads to wait for their child
    private static SyncQueue ioQueue;    // I/O queue
 
+   
+   // ADDED BY REZA
+   // File System
+   private static FileSystem fileSystem;
+   // END OF ADDED BY REZA
+   
+   
+   
    private final static int COND_DISK_REQ = 1; // wait condition 
    private final static int COND_DISK_FIN = 2; // wait condition
 
@@ -84,7 +92,15 @@ public class Kernel
                   // instantiate synchronized queues
                   ioQueue = new SyncQueue( );
                   waitQueue = new SyncQueue( scheduler.getMaxThreads( ) );
-                  return OK;
+                  
+				  
+				  // ADDED BY REZA
+				  // Instantiate a file system
+				  fileSystem = new FileSystem(1000);
+				  // END OF ADDED BY REZA
+				  
+				  
+				  return OK;
                case EXEC:
                   return sysExec( ( String[] )args );
                case WAIT:
@@ -123,7 +139,15 @@ public class Kernel
                      ioQueue.enqueueAndSleep( COND_DISK_FIN );
                   return OK;
                case SYNC:     // synchronize disk data to a real file
-                  while ( disk.sync( ) == false )
+                  
+				  // ADDED BY REZA
+				  fileSystem.sync();
+				  // END OF ADDED BY REZA
+				  
+				  
+				  
+				  
+				  while ( disk.sync( ) == false )
                      ioQueue.enqueueAndSleep( COND_DISK_REQ );
                   while ( disk.testAndResetReady( ) == false )
                      ioQueue.enqueueAndSleep( COND_DISK_FIN );
@@ -153,6 +177,19 @@ public class Kernel
                         System.out.println( "threaOS: caused read errors" );
                         return ERROR;
                   }
+				  
+				  
+				  if ((myTcb = scheduler.getMyTcb()) != null) {
+					  
+					  FileTableEntry fileTableEntry = myTcb.getFtEnt(param);
+					  if (fileTableEntry != null) {
+						  
+						  return fileSystem.read(fileTableEntry, (byte[])args);
+					  }
+				  }
+				  
+				  
+				  
                   // return FileSystem.read( param, byte args[] );
                   return ERROR;
                case WRITE:
@@ -162,13 +199,35 @@ public class Kernel
                         return ERROR;
                      case STDOUT:
                         System.out.print( (String)args );
-                        break;
+        
+						// ADDED BY REZA
+						// break;
+						return OK;
+						// END OF ADDED BY REZA
+						
                      case STDERR:
                         System.err.print( (String)args );
-                        break;
+                        
+						
+						// ADDED BY REZA
+						// break;
+						return OK;
+
                   }
-                  return OK;
-               case CREAD:   // to be implemented in assignment 4
+				  
+				  if ((myTcb = scheduler.getMyTcb()) != null) {
+					  
+					  FileTableEntry fileTableEntry = myTcb.getFtEnt(param);
+					  if (fileTableEntry != null) {
+						  return fileSystem.write(fileTableEntry, (byte[])args);
+					  }
+				  }
+				  
+                  // return OK;
+				  return ERROR;
+			   // END OF ADDED BY REZA
+			   
+			   case CREAD:   // to be implemented in assignment 4
                   return cache.read( param, ( byte[] )args ) ? OK : ERROR;
                case CWRITE:  // to be implemented in assignment 4
                   return cache.write( param, ( byte[] )args ) ? OK : ERROR;
@@ -179,17 +238,95 @@ public class Kernel
                   cache.flush( );
                   return OK;
                case OPEN:    // to be implemented in project
-                  return OK;
+				
+                  // ADDED BY REZA
+				  if ((myTcb = scheduler.getMyTcb()) != null) {
+					  String[] stringArray = (String[])args;
+					  
+					  return myTcb.getFd(fileSystem.open(stringArray[0], stringArray[1]));  
+				  }
+					
+				  
+				  return ERROR;	// If we get here, return ERROR.
+				  // return OK;
+				  // END OF ADDED BY REZA
+				  
                case CLOSE:   // to be implemented in project
-                  return OK;
+			   
+					// ADDED BY REZA
+					if ((myTcb = scheduler.getMyTcb()) != null) {
+						FileTableEntry fileTableEntry = myTcb.getFtEnt(param);
+						if (fileTableEntry == null || fileSystem.close(fileTableEntry) == false) {
+							return ERROR;
+						}
+						
+						
+						if (myTcb.returnFd(param) != fileTableEntry) {
+							return ERROR;
+						}
+						
+						
+						return OK;	
+					}
+					
+					
+					return ERROR;
+					// END OF ADDED BY REZA
+			   
+                  
                case SIZE:    // to be implemented in project
-                  return OK;
+			   
+					// ADDED BY REZA
+					if ((myTcb = scheduler.getMyTcb()) != null) {
+						FileTableEntry fileTableEntry = myTcb.getFtEnt(param);
+						if (fileTableEntry != null) {
+							return fileSystem.fsize(fileTableEntry);
+						}
+					}
+					
+					
+					return ERROR;
+					// return OK;
+					// END OF ADDED BY REZA
+			   
+                  
                case SEEK:    // to be implemented in project
-                  return OK;
+			   
+					// ADDED BY REZA
+					if ((myTcb = scheduler.getMyTcb()) != null) {
+						int[] seekArgs = (int[])args;
+						FileTableEntry fileTableEntry = myTcb.getFtEnt(param);
+						if (fileTableEntry != null) {
+							return fileSystem.seek(fileTableEntry, seekArgs[0], seekArgs[1]);
+						}
+					}
+					
+					
+					return ERROR;
+					// return OK;
+					// END OF ADDED BY REZA
+			   
                case FORMAT:  // to be implemented in project
-                  return OK;
+                  
+					// ADDED BY REZA
+					if (fileSystem.format(param) == true) {
+						return OK;
+					}
+				
+				
+					return ERROR;
+					// END OF ADDED BY REZA
                case DELETE:  // to be implemented in project
-                  return OK;
+					
+					// ADDED BY REZA
+					if (fileSystem.delete((String)args) == true) {
+						return OK;
+					}
+				
+				
+					return ERROR;
+					// return OK;
+					// END OF ADDED BY REZA
             }
             return ERROR;
          case INTERRUPT_DISK: // Disk interrupts

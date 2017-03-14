@@ -37,7 +37,7 @@ public class FileTableEntry {	// Each table entry should have
 	public FileTableEntry(Inode inode, short iNumber, String mode) {
 		
 		seekPtr = 0;		// the seek pointer is set to the file top
-		this.inode = i;
+		this.inode = inode;
 		this.iNumber = iNumber;
 		count = 1;			// at least one thread is using this entry
 		this.mode = mode;
